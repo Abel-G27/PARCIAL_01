@@ -83,6 +83,26 @@ El módulo del **Sistema Empresarial de Servicios Digitales** está diseñado pa
    ## Diagrama Entidad-Relación (Parte I)
 ![DER Sistema Empresarial](./Imagenes/Captura%20de%20pantalla%202026-10-19%20120342.png)
 
+## Fase II: Normalización de la Base de Datos (Hasta 3FN)
+
+El diseño relacional implementado para ambos sistemas (*Enterprise Digital Services* y *Pixel-Security-360*) ha sido estructurado rigurosamente cumpliendo hasta la **Tercera Forma Normal (3FN)**. Esto garantiza la integridad, consistencia y eficiencia transaccional de los datos en el motor InnoDB de MySQL 8.0.
+
+### 1. Aplicación de las Formas Normales
+* **Primera Forma Normal (1FN):** Se aseguró que todos los atributos de las tablas contengan valores atómicos (indivisibles). Se eliminaron grupos repetitivos o arreglos anidados; cada intersección de fila y columna almacena un único valor escalar (por ejemplo, los datos de contacto en `clientes` y `personal_seguridad` están desglosados en campos independientes).
+* **Segunda Forma Normal (2FN):** Las tablas se encuentran en 1FN y se eliminaron las dependencias parciales. Todos los atributos que no forman parte de la clave primaria dependen funcionalmente de la totalidad de la clave principal, evitando duplicidades en tablas relacionales como `contratos` o `dispositivos`.
+* **Tercera Forma Normal (3FN):** Se eliminaron por completo las dependencias transitivas. Ningún atributo no clave depende de otro atributo que no sea la clave primaria. Por ejemplo, los datos descriptivos de los servicios o zonas no se duplican dentro de los registros transaccionales, sino que se enlazan mediante claves foráneas.
+
+### 2. Problemas Resueltos en Cada Etapa
+* **Redundancia de datos:** Se previno la duplicación innecesaria de información, optimizando el espacio de almacenamiento y el rendimiento de las consultas.
+* **Anomalías de Actualización:** Se evitaron inconsistencias donde modificar un dato (como el teléfono de un empleado o el costo de un servicio) requiriera actualizar múltiples registros dispersos; ahora se modifica en una única ubicación centralizada.
+* **Anomalías de Inserción y Borrado:** Se aseguró que la eliminación de un registro operativo (por ejemplo, una alerta de seguridad) no destruya accidentalmente información estructural crítica (como el catálogo de personal o zonas).
+
+### 3. Justificación del Diseño Óptimo
+El diseño final es altamente óptimo para entornos empresariales porque:
+* Mantiene un **equilibrio transaccional (ACID)** estricto gracias al motor InnoDB.
+* Utiliza claves foráneas con restricciones estrictas de integridad referencial, asegurando que no existan registros huérfanos.
+* Facilita la escalabilidad y la construcción de reportes complejos mediante vistas y cruces optimizados (`JOIN`) sin sacrificar la consistencia relacional.
+
 ---
 
 ## PARTE III: Startup Pixel-Security-360 (Pentesting Platform)
