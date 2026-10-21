@@ -174,3 +174,38 @@ La plataforma web ***One-Click One-Security*** desarrollada para la startup **Pi
 
 ## Diagrama Entidad-Relación (Parte III)
 ![DER Pixel-Security-360](./Imagenes/Captura%20de%20pantalla%202026-10-19%20125300.png)
+
+
+### Justificación Técnica de las Especificaciones del Contenedor
+
+Para garantizar la portabilidad, seguridad y persistencia de la infraestructura del proyecto, se configuraron los siguientes parámetros en el archivo `docker-compose.yml`:
+
+1. **Versión de la Imagen (`image: mysql:8.0`)**:
+   * **Justificación**: Se seleccionó MySQL 8.0 por ser el estándar de la industria actual. Ofrece mejoras críticas en rendimiento, optimización de consultas, soporte robusto para restricciones de integridad relacional (DDL/DML) y compatibilidad total con las extensiones de desarrollo en VS Code.
+
+2. **Mapeo de Puertos (`ports: "3306:3306"`)**:
+   * **Justificación**: Permite enlazar el puerto estándar de MySQL dentro del contenedor (`3306`) con el mismo puerto en la máquina anfitriona. Esto facilita la conexión directa desde herramientas de gestión de bases de datos locales sin necesidad de instalar un servidor de base de datos pesado directamente en el sistema operativo del equipo.
+
+3. **Persistencia de Datos mediante Volúmenes (`volumes: mysql_data:/var/lib/mysql`)**:
+   * **Justificación**: Los contenedores de Docker son efímeros por naturaleza (si se destruyen, se pierde su contenido interno). Implementar un volumen con nombre (`mysql_data`) garantiza que los archivos de datos y tablas de MySQL se almacenen de forma segura en el disco duro del host, asegurando que la información persista aunque el contenedor se apague, se reinicie o se elimine.
+
+4. **Automatización de Variables de Entorno (`MYSQL_ROOT_PASSWORD` y `MYSQL_DATABASE`)**:
+   * **Justificación**: Permiten el aprovisionamiento automático (*zero-configuration bootstrap*). Al iniciar el contenedor por primera vez, se configura de manera segura la contraseña del usuario administrador (`root`) y se crea instantáneamente la base de datos vacía llamada `parcial_db`, evitando pasos de configuración manual y estandarizando el entorno para todos los colaboradores del equipo.
+
+## Fase III: Diseño y Estructuración de Bases de Datos (DDL)
+
+Para este proyecto se han diseñado e implementado dos sistemas relacionales independientes dentro de la base de datos `parcial_db`, aplicando restricciones de integridad referencial (`PRIMARY KEY`, `FOREIGN KEY`), llaves candidatas únicas (`UNIQUE`), control de borrados/actualizaciones en cascada y utilizando el motor transaccional `InnoDB` de MySQL 8.0.
+
+### 1. Sistema: Enterprise Digital Services (`enterprise_ddl.sql`)
+Este módulo gestiona la relación comercial corporativa, el catálogo de servicios y la asignación de recursos humanos y contractuales:
+* **`clientes`**: Almacena la información jurídica y de contacto de las empresas clientes, asegurando la unicidad mediante el RUC/NIT.
+* **`empleados`**: Registra al personal corporativo y gestores internos de la organización.
+* **`servicios_digitales`**: Catálogo con los servicios tecnológicos ofrecidos y sus respectivos costos mensuales.
+* **`contratos`**: Tabla relacional que vincula un cliente, un servicio digital y un empleado asignado, garantizando integridad referencial estricta.
+
+### 2. Sistema: Pixel-Security-360 (`pixel_security_ddl.sql`)
+Este módulo está enfocado en la administración de infraestructura de seguridad inteligente, monitoreo de zonas críticas y gestión de incidentes:
+* **`zonas`**: Define las áreas físicas de vigilancia y evalúa su nivel de riesgo operativo.
+* **`dispositivos`**: Administra los equipos instalados (cámaras, sensores) asociados de forma directa a una zona específica.
+* **`personal_seguridad`**: Catálogo del personal operativo, turnos de vigilancia y vías de contacto.
+* **`alertas_incidentes`**: Bitácora centralizada de eventos y alertas generadas por los dispositivos, con trazabilidad del personal de seguridad a cargo.
