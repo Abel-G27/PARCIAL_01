@@ -1,0 +1,116 @@
+1. CREATE → Inserción
+Propósito: Registrar un nuevo usuario en el sistema cumpliendo con las restricciones de la tabla, asignando sus datos básicos, fecha de registro y un estatus inicial activo.
+
+Script SQL:
+
+SQL
+USE enterprise_db;
+
+INSERT INTO Usuario (Nombre, Correo, Fecha_registro, Estado, activo_sistema) 
+VALUES ('Prueba DBeaver', 'prueba.dbeaver@empresa.com', '2026-01-10', 'Activo', 1);
+
+
+2. READ → Consulta filtrada
+Propósito: Buscar y filtrar registros específicos bajo condiciones determinadas (por ejemplo, consultar únicamente los usuarios que se encuentren con estatus 'Activo' y cuya fecha de registro sea posterior o igual a una fecha específica, ordenados del más reciente al más antiguo).
+
+Script SQL:
+
+SQL
+USE enterprise_db;
+
+SELECT ID_usuario, Nombre, Correo, Fecha_registro, Estado 
+FROM Usuario 
+WHERE Estado = 'Activo' AND Fecha_registro >= '2026-01-01'
+ORDER BY Fecha_registro DESC;
+
+
+3. UPDATE → Actualización controlada
+Propósito: Modificar de forma controlada y específica los atributos de un registro existente mediante una condición estricta en el WHERE (por ejemplo, cambiar el estatus de un usuario a 'Suspendido' y revocar su acceso al sistema).
+
+Script SQL:
+
+SQL
+USE enterprise_db;
+
+UPDATE Usuario 
+SET Estado = 'Suspendido', activo_sistema = 0 
+WHERE Correo = 'prueba.dbeaver@empresa.com';
+
+
+4. DELETE → Eliminación lógica (con justificación)
+Justificación técnica: En sistemas empresariales con altos estándares de transaccionalidad y auditoría (como bases de datos corporativas), no se recomienda la eliminación física (DELETE), ya que destruiría el historial de operaciones o generaría fallos de integridad referencial con registros vinculados (como auditorías de acceso o transacciones). En su lugar, se implementa una eliminación lógica, que consiste en actualizar el estado del registro para denegar su acceso manteniendo intacto el histórico.
+
+Script SQL (Eliminación lógica mediante actualización de estatus):
+
+SQL
+USE enterprise_db;
+
+UPDATE Usuario 
+SET Estado = 'Inactivo', activo_sistema = 0 
+WHERE Correo = 'prueba.dbeaver@empresa.com';
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+1. Vista de Negocio (Consolidación de datos)
+Propósito: Agrupa y consolida información clave de múltiples tablas (usuarios, servicios contratados y pagos) para facilitar la toma de decisiones gerenciales o la visualización del estado financiero del cliente en una sola consulta.
+
+Script SQL:
+SQL
+USE enterprise_db;
+
+CREATE OR REPLACE VIEW vista_negocio_clientes AS
+SELECT 
+    u.ID_usuario,
+    u.Nombre AS Cliente,
+    u.Correo,
+    s.Nombre_servicio AS Servicio_Contratado,
+    p.Monto,
+    p.Estado_pago
+FROM Usuario u
+JOIN Detalle_servicio ds ON u.ID_usuario = ds.ID_usuario
+JOIN Servicio s ON ds.ID_servicio = s.ID_servicio
+LEFT JOIN Pago p ON u.ID_usuario = p.ID_usuario;
+Uso real (SELECT sobre la vista):
+
+SQL
+SELECT * FROM vista_negocio_clientes;
+
+
+2. Vista de Seguridad (Oculta datos sensibles)
+Propósito: Proteger la información confidencial de los usuarios. Permite que aplicaciones o personal autorizado consulten datos generales de acceso (como dispositivos y fechas de último acceso) sin exponer nunca datos críticos o sensibles como las contraseñas (Contrasena) o los tokens de seguridad (Token) que están en la tabla Autenticacion.
+
+Script SQL:
+CREATE OR REPLACE VIEW vista_seguridad_autenticacion AS
+SELECT 
+    Usuario.ID_usuario,
+    Usuario.Nombre,
+    Usuario.Correo,
+    Autenticacion.Dispositivo,
+    Autenticacion.Ultimo_acceso
+FROM Usuario
+INNER JOIN Autenticacion ON Usuario.ID_usuario = Autenticacion.ID_usuario;
+
+SQL
+SELECT * FROM vista_seguridad_autenticacion;
+
+
+3. Vista de Auditoría (Accesos y transacciones)
+Propósito: Monitorear de forma centralizada la seguridad del sistema, mostrando las acciones realizadas por los usuarios, las IPs de origen, las marcas de tiempo y el estado general de las operaciones para la detección de anomalías.
+
+Script SQL:
+SQL
+SQL
+CREATE OR REPLACE VIEW vista_auditoria_accesos AS
+SELECT 
+    Auditoria_acceso.ID_auditoria,
+    Usuario.Nombre AS Usuario,
+    Auditoria_acceso.Accion,
+    Auditoria_acceso.IP_origen,
+    Auditoria_acceso.Fecha_hora,
+    Usuario.Estado AS Estado_Usuario
+FROM Auditoria_acceso
+INNER JOIN Usuario ON Usuario.ID_usuario = Auditoria_acceso.ID_usuario;
+Consultar la vista:
+
+SQL
+SELECT * FROM vista_auditoria_accesos;

@@ -229,3 +229,46 @@ Este módulo está enfocado en la administración de infraestructura de segurida
 * **`dispositivos`**: Administra los equipos instalados (cámaras, sensores) asociados de forma directa a una zona específica.
 * **`personal_seguridad`**: Catálogo del personal operativo, turnos de vigilancia y vías de contacto.
 * **`alertas_incidentes`**: Bitácora centralizada de eventos y alertas generadas por los dispositivos, con trazabilidad del personal de seguridad a cargo.
+
+
+
+# 🛡️ Pixel-Security-360: Bitácora de Implementación y Carga de Datos
+
+Este documento detalla el proceso de diseño, resolución de errores y población de registros (25 por módulo) para la base de datos relacional del proyecto **Pixel-Security-360**.
+
+---
+
+## 🛠️ Entorno Tecnológico y Herramientas
+* **Base de Datos:** MySQL 8.0 (Ejecutándose en contenedor Docker).
+* **Gestor de BD:** DBeaver.
+* **Entorno de Desarrollo / Código:** Visual Studio Code.
+
+---
+
+## 📋 Proceso de Desarrollo y Resolución de Incidencias
+
+Durante la implementación del esquema DML, se resolvieron de forma incremental los siguientes retos técnicos para garantizar la integridad referencial:
+
+### 1. Definición de Esquemas y Campos Booleanos
+* Se incorporó el campo booleano `prueba_automatizada` (`TRUE` / `FALSE`) en la tabla `Tipo_prueba` dentro del DDL en VS Code para diferenciar las evaluaciones automatizadas de las manuales.
+* Se aseguró una longitud adecuada en el campo `Estado` (`VARCHAR`) para admitir valores como `'Activo'`, `'Inactivo'` y `'En Desarrollo'` sin errores de truncamiento.
+
+### 2. Control de Integridad Referencial y Llaves Foráneas (FK)
+* **Incidencia:** Al insertar registros en la tabla dependiente `Reporte`, se presentó el error `[1452]` debido a que los IDs de `Tipo_prueba` se habían desplazado (del 26 al 40) por intentos previos de inserción con `AUTO_INCREMENT`.
+* **Solución:** Se ajustaron los punteros y se correlacionaron de forma exacta los IDs foráneos en las tablas transaccionales (`Reporte` y `Pago`) para alinearlos correctamente con los catálogos base.
+
+### 3. Metodología de Carga Incremental (Módulo por Módulo)
+Para evitar bloqueos de sintaxis masiva (`Error 1064`) y asegurar un diagnóstico inmediato de errores, la población de los 25 registros por módulo se ejecutó de forma secuencial y ordenada en DBeaver:
+1. **`Tipo_usuario`**: Inserción de roles y perfiles técnicos operativos.
+2. **`Tipo_prueba`**: Registro del catálogo de auditorías, pentesting y análisis de vulnerabilidades.
+3. **`Usuario`**: Alta de registros demográficos, credenciales y estados de verificación.
+4. **`Autenticacion`**: Asociación de sesiones, agentes de usuario (`User-Agent`) y tokens de acceso.
+5. **`Reporte`**: Vinculación de hallazgos técnicos y resultados de seguridad por usuario y prueba.
+6. **`Pago`**: Configuración de métodos de pago, tarjetas asociadas y preferencias por defecto.
+
+---
+
+## 📊 Estado Final del Proyecto
+* ✅ **5 Módulos principales** normalizados.
+* ✅ **25 registros reales y consistentes** por cada tabla.
+* ✅ **Vistas analíticas** (Negocio, Seguridad y Auditoría) operativas y validadas.
